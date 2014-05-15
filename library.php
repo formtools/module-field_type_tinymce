@@ -154,9 +154,7 @@ function field_type_tinymce__install($module_id)
     VALUES ($field_type_id, 'Field Comments', 'comments', 'textarea', 'na', '', 7)
   ");
 
-
-  // now assign the template hook so that the tinyMCE files are included on the Edit Submission pages
-  ft_register_hook("template", "field_type_tinymce", "head_bottom", "", "tinymce_include_files");
+  field_type_tinymce_reset_hooks();
 
   return array(true, "");
 }
@@ -242,6 +240,8 @@ function field_type_tinymce__upgrade($old_version, $new_version)
   	    '{\$LANG.validation_default_rule_required}', 1)
   	");
   }
+
+  field_type_tinymce_reset_hooks();
 }
 
 
@@ -259,6 +259,13 @@ function tinymce_include_files($hook_name, $page_data)
   if ($curr_page != "admin_edit_submission" && $curr_page != "client_edit_submission")
     return;
 
+  echo "<script src=\"$g_root_url/modules/field_type_tinymce/tinymce/jquery.tinymce.js\"></script>";
+}
+
+
+function tinymce_include_standalone_files($hook_name, $page_data)
+{
+  global $g_root_url;
   echo "<script src=\"$g_root_url/modules/field_type_tinymce/tinymce/jquery.tinymce.js\"></script>";
 }
 
@@ -315,5 +322,14 @@ function tinymce_update_settings($info)
   }
 
   return array(true, $L["notify_default_settings_updated"]);
+}
+
+
+function field_type_tinymce_reset_hooks()
+{
+  ft_unregister_module_hooks("field_type_tinymce");
+
+  ft_register_hook("template", "field_type_tinymce", "head_bottom", "", "tinymce_include_files");
+  ft_register_hook("template", "field_type_tinymce", "standalone_form_fields_head_bottom", "", "tinymce_include_standalone_files");
 }
 

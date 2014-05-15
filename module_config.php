@@ -5,6 +5,13 @@ $STRUCTURE = array();
 $HOOKS = array(
   array(
     "hook_type"       => "template",
+    "action_location" => "standalone_form_fields_head_bottom",
+    "function_name"   => "",
+    "hook_function"   => "tinymce_include_standalone_files",
+    "priority"        => "50"
+  ),
+  array(
+    "hook_type"       => "template",
     "action_location" => "head_bottom",
     "function_name"   => "",
     "hook_function"   => "tinymce_include_files",
