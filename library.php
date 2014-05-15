@@ -46,11 +46,21 @@ function field_type_tinymce__install($module_id)
     VALUES ('no', 'This module may only be edited via the tinyMCE module.', $module_id, '{\$LANG.word_wysiwyg}', 'tinymce', $group_id,
     'no', 'no', 'textarea', NULL, $next_list_order, 'large,very_large', 'smarty', 'core', '',
     '{if \$CONTEXTPAGE == \"edit_submission\"}\r\n  {\$VALUE}\r\n{elseif \$CONTEXTPAGE == \"submission_listing\"}\r\n  {\$VALUE|strip_tags}\r\n{else}\r\n  {\$VALUE|nl2br}\r\n{/if}',
-    '<textarea name=\"{\$NAME}\" class=\"cf_tinymce\">{\$VALUE}</textarea>\r\n<script>\r\ncf_tinymce_settings[\"{\$NAME}\"] = {literal}{{/literal}\r\n{if \$toolbar == \"basic\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"simple\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,link,unlink,forecolorpicker,backcolorpicker\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"advanced\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2: \"forecolorpicker,backcolorpicker,|,sub,sup,code\",\r\n{elseif \$toolbar == \"expert\"}\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2 : \"undo,redo,|,forecolorpicker,backcolorpicker,|,sub,sup,|,newdocument,blockquote,charmap,removeformat,cleanup,code\",\r\n{/if}\r\n  theme_advanced_buttons3: \"\",\r\n{if \$show_path == \"yes\"}\r\n  theme_advanced_path_location:     \"{\$path_info_location}\",\r\n  theme_advanced_resizing:          {\$resizing},\r\n{/if}\r\n  theme_advanced_resize_horizontal: false,\r\n  theme_advanced_toolbar_location:  \"{\$location}\",\r\n  theme_advanced_toolbar_align:     \"{\$alignment}\"  \r\n{literal}}{/literal}\r\n</script>\r\n{if \$comments}\r\n  <div class=\"cf_field_comments\">{\$comments}</div>\r\n{/if}\r\n', '', 'body .defaultSkin table.mceLayout { border-width: 0px }\r\nbody .defaultSkin table.mceLayout tr.mceFirst td { border-top: 0px; }\r\nbody .defaultSkin .mceToolbar { height: 21px; }\r\nbody .defaultSkin td.mceToolbar { padding-top: 0px; }', '// this is populated by each tinyMCE WYWISYG with their settings on page load\r\nvar cf_tinymce_settings = {};\r\n\r\n\$(function() {\r\n  \$(''textarea.cf_tinymce'').each(function() {\r\n    var field_name = \$(this).attr(\"name\");\r\n    var settings   = cf_tinymce_settings[field_name];\r\n    settings.script_url = g.root_url + \"/modules/field_type_tinymce/tinymce/tiny_mce.js\";\r\n    settings.theme = \"advanced\",\r\n    \$(this).tinymce(settings);\r\n  });\r\n});\r\n')")
-    or die(mysql_error());
+    '<textarea name=\"{\$NAME}\" id=\"cf_{\$NAME}_id\" class=\"cf_tinymce\">{\$VALUE}</textarea>\r\n<script>\r\ncf_tinymce_settings[\"{\$NAME}\"] = {literal}{{/literal}\r\n{if \$toolbar == \"basic\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"simple\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,link,unlink,forecolorpicker,backcolorpicker\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"advanced\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2: \"forecolorpicker,backcolorpicker,|,sub,sup,code\",\r\n{elseif \$toolbar == \"expert\"}\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2 : \"undo,redo,|,forecolorpicker,backcolorpicker,|,sub,sup,|,newdocument,blockquote,charmap,removeformat,cleanup,code\",\r\n{/if}\r\n  theme_advanced_buttons3: \"\",\r\n{if \$show_path == \"yes\"}\r\n  theme_advanced_path_location:     \"{\$path_info_location}\",\r\n  theme_advanced_resizing:          {\$resizing},\r\n{/if}\r\n  theme_advanced_resize_horizontal: false,\r\n  theme_advanced_toolbar_location:  \"{\$location}\",\r\n  theme_advanced_toolbar_align:     \"{\$alignment}\"  \r\n{literal}}{/literal}\r\n</script>\r\n{if \$comments}\r\n  <div class=\"cf_field_comments\">{\$comments}</div>\r\n{/if}\r\n',
+    '', 'body .defaultSkin table.mceLayout { border-width: 0px }\r\nbody .defaultSkin table.mceLayout tr.mceFirst td { border-top: 0px; }\r\nbody .defaultSkin .mceToolbar { height: 21px; }\r\nbody .defaultSkin td.mceToolbar { padding-top: 0px; }',
+    '// this is populated by each tinyMCE WYWISYG with their settings on page load\r\nvar cf_tinymce_settings = {};\r\n\r\n$(function() {\r\n  $(''textarea.cf_tinymce'').each(function() {\r\n    var field_name = $(this).attr(\"name\");\r\n    var settings   = cf_tinymce_settings[field_name];\r\n    settings.script_url = g.root_url + \"/modules/field_type_tinymce/tinymce/tiny_mce.js\";\r\n    settings.theme = \"advanced\",\r\n    $(this).tinymce(settings);\r\n  });\r\n});\r\n\r\ncf_tinymce_settings.check_required = function() {\r\n  var errors = [];\r\n  for (var i=0; i<rsv_custom_func_errors.length; i++) {\r\n    if (rsv_custom_func_errors[i].func != \"cf_tinymce_settings.check_required\") {\r\n      continue;\r\n    }\r\n    var field_name = rsv_custom_func_errors[i].field;\r\n    var val = $.trim(tinyMCE.get(\"cf_\" + field_name + \"_id\").getContent());\r\n    if (!val) {\r\n      var el = document.edit_submission_form[field_name];\r\n      errors.push([el, rsv_custom_func_errors[i].err]);\r\n    }\r\n  }\r\n  if (errors.length) {\r\n    return errors;\r\n  }\r\n  return true; \r\n}')
+	") or die(mysql_error());
 
   $field_type_id = mysql_insert_id();
 
+
+  // the validation rule
+  mysql_query("
+    INSERT INTO {$g_table_prefix}field_type_validation_rules (field_type_id, rsv_rule, rule_label, rsv_field_name,
+  	  custom_function, custom_function_required, default_error_message, list_order)
+  	VALUES ($field_type_id, 'function', '{\$LANG.word_required}', '', 'cf_tinymce_settings.check_required', 'yes',
+  	  '{\$LANG.validation_default_rule_required}', 1)
+  ");
 
   // now insert the settings and their options
 
@@ -205,6 +215,8 @@ function field_type_tinymce__upgrade($old_version, $new_version)
   $old_version_info = ft_get_version_info($old_version);
   $new_version_info = ft_get_version_info($new_version);
 
+  $field_type_id = ft_get_field_type_id_by_identifier("tinymce");
+
   if ($old_version_info["release_date"] < 20110526)
   {
     mysql_query("
@@ -212,6 +224,23 @@ function field_type_tinymce__upgrade($old_version, $new_version)
       SET    view_field_smarty_markup =  '{if \$CONTEXTPAGE == \"edit_submission\"}\r\n  {\$VALUE}\r\n{elseif \$CONTEXTPAGE == \"submission_listing\"}\r\n  {\$VALUE|strip_tags}\r\n{else}\r\n  {\$VALUE|nl2br}\r\n{/if}'
       WHERE  field_type_identifier = 'tinymce'
     ");
+  }
+
+  if ($old_version_info["release_date"] < 2011107)
+  {
+    mysql_query("
+      UPDATE {$g_table_prefix}field_types
+      SET    edit_field_smarty_markup = '<textarea name=\"{\$NAME}\" id=\"cf_{\$NAME}_id\" class=\"cf_tinymce\">{\$VALUE}</textarea>\r\n<script>\r\ncf_tinymce_settings[\"{\$NAME}\"] = {literal}{{/literal}\r\n{if \$toolbar == \"basic\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"simple\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,link,unlink,forecolorpicker,backcolorpicker\",\r\n  theme_advanced_buttons2: \"\",\r\n{elseif \$toolbar == \"advanced\"}\r\n  theme_advanced_buttons1: \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2: \"forecolorpicker,backcolorpicker,|,sub,sup,code\",\r\n{elseif \$toolbar == \"expert\"}\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons1 : \"bold,italic,underline,strikethrough,|,bullist,numlist,|,outdent,indent,|,blockquote,hr,|,undo,redo,link,unlink,|,formatselect,fontselect,fontsizeselect\",\r\n  theme_advanced_buttons2 : \"undo,redo,|,forecolorpicker,backcolorpicker,|,sub,sup,|,newdocument,blockquote,charmap,removeformat,cleanup,code\",\r\n{/if}\r\n  theme_advanced_buttons3: \"\",\r\n{if \$show_path == \"yes\"}\r\n  theme_advanced_path_location:     \"{\$path_info_location}\",\r\n  theme_advanced_resizing:          {\$resizing},\r\n{/if}\r\n  theme_advanced_resize_horizontal: false,\r\n  theme_advanced_toolbar_location:  \"{\$location}\",\r\n  theme_advanced_toolbar_align:     \"{\$alignment}\"  \r\n{literal}}{/literal}\r\n</script>\r\n{if \$comments}\r\n  <div class=\"cf_field_comments\">{\$comments}</div>\r\n{/if}\r\n',
+             resources_js = '// this is populated by each tinyMCE WYWISYG with their settings on page load\r\nvar cf_tinymce_settings = {};\r\n\r\n$(function() {\r\n  $(''textarea.cf_tinymce'').each(function() {\r\n    var field_name = $(this).attr(\"name\");\r\n    var settings   = cf_tinymce_settings[field_name];\r\n    settings.script_url = g.root_url + \"/modules/field_type_tinymce/tinymce/tiny_mce.js\";\r\n    settings.theme = \"advanced\",\r\n    $(this).tinymce(settings);\r\n  });\r\n});\r\n\r\ncf_tinymce_settings.check_required = function() {\r\n  var errors = [];\r\n  for (var i=0; i<rsv_custom_func_errors.length; i++) {\r\n    if (rsv_custom_func_errors[i].func != \"cf_tinymce_settings.check_required\") {\r\n      continue;\r\n    }\r\n    var field_name = rsv_custom_func_errors[i].field;\r\n    var val = $.trim(tinyMCE.get(\"cf_\" + field_name + \"_id\").getContent());\r\n    if (!val) {\r\n      var el = document.edit_submission_form[field_name];\r\n      errors.push([el, rsv_custom_func_errors[i].err]);\r\n    }\r\n  }\r\n  if (errors.length) {\r\n    return errors;\r\n  }\r\n  return true; \r\n}\r\n'
+      WHERE  field_type_id = $field_type_id
+    ");
+
+  	mysql_query("
+  	  INSERT INTO {$g_table_prefix}field_type_validation_rules (field_type_id, rsv_rule, rule_label, rsv_field_name,
+  	    custom_function, custom_function_required, default_error_message, list_order)
+  	  VALUES ($field_type_id, 'function', '{\$LANG.word_required}', '', 'cf_tinymce_settings.check_required', 'yes',
+  	    '{\$LANG.validation_default_rule_required}', 1)
+  	");
   }
 }
 
