@@ -1,14 +1,14 @@
 <?php
 
 /*
- * Module file: TinyMCE
+ * Module file: TinyMCE Field
  */
 
 $MODULE["author"]          = "Encore Web Studios";
 $MODULE["author_email"]    = "formtools@encorewebstudios.com";
 $MODULE["author_link"]     = "http://www.encorewebstudios.com";
-$MODULE["version"]         = "1.0.0";
-$MODULE["date"]            = "2011-05-17";
+$MODULE["version"]         = "1.0.1";
+$MODULE["date"]            = "2011-05-19";
 $MODULE["origin_language"] = "en_us";
 
 
