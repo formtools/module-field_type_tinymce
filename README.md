@@ -1,4 +1,4 @@
-## TinyMCE Field Type Module
+## TinyMCE Field Module
 
 This module provides a rich-text editor field type for use in your forms fields. This module is also used by other
 modules such as the [Pages](https://docs.formtools.org/modules/pages/) module. 
