@@ -17,8 +17,8 @@ class Module extends FormToolsModule
     protected $author = "Ben Keen";
     protected $authorEmail = "ben.keen@gmail.com";
     protected $authorLink = "https://formtools.org";
-    protected $version = "2.0.0";
-    protected $date = "2017-10-15";
+    protected $version = "2.0.1";
+    protected $date = "2017-11-01";
     protected $originLanguage = "en_us";
 
     protected $jsFiles = array(
@@ -188,7 +188,7 @@ class Module extends FormToolsModule
 
             $db->query("
                 UPDATE {PREFIX}field_type_settings
-                SET    default_value = :new_default_value
+                SET    default_value = :default_value
                 WHERE  field_type_id = :field_type_id AND
                        field_setting_identifier = :identifier
                 LIMIT 1
