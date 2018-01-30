@@ -7,7 +7,7 @@ use FormTools\Core;
 use FormTools\FieldTypes;
 use FormTools\Hooks;
 use FormTools\Module as FormToolsModule;
-use PDO, PDOException;
+use PDO, Exception;
 
 
 class Module extends FormToolsModule
@@ -18,7 +18,7 @@ class Module extends FormToolsModule
     protected $authorEmail = "ben.keen@gmail.com";
     protected $authorLink = "https://formtools.org";
     protected $version = "2.0.3";
-    protected $date = "2017-12-14";
+    protected $date = "2018-01-28";
     protected $originLanguage = "en_us";
 
     protected $jsFiles = array(
@@ -28,7 +28,193 @@ class Module extends FormToolsModule
 
     protected $nav = array(
         "module_name" => array("index.php", false),
-        "word_help"   => array("help.php", false)
+        "phrase_reset_field_settings" => array("reset.php", false),
+        "word_help" => array("help.php", false)
+    );
+
+
+    private static $viewFieldSmartyMarkup =<<< END
+{if \$CONTEXTPAGE == "edit_submission"}
+    {\$VALUE}
+{elseif \$CONTEXTPAGE == "submission_listing"}
+    {\$VALUE|strip_tags}
+{else}
+    {\$VALUE|nl2br}
+{/if}
+END;
+
+    private static $editFieldSmartyMarkup =<<< END
+<textarea name="{\$NAME}" id="cf_{\$NAME}_id" class="cf_tinymce">{\$VALUE}</textarea>
+<script>
+cf_tinymce_settings["{\$NAME}"] = {literal}{{/literal}
+    skin: "lightgray",
+    branding: false,
+    menubar: false,
+    elementpath: false,
+{if \$toolbar == "basic"}
+    toolbar: [
+        'bold italic underline strikethrough | bullist numlist'
+    ],
+{elseif \$toolbar == "simple"}
+    toolbar: [
+        'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | link unlink forecolor backcolor'
+    ],
+    plugins: 'hr link textcolor lists',
+{elseif \$toolbar == "advanced"}
+    toolbar: [
+        'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | undo redo link unlink | fontselect fontsizeselect',
+        'forecolor backcolor | subscript superscript code'
+    ],
+    plugins: 'hr link textcolor lists',
+{elseif \$toolbar == "expert"}
+    toolbar: [
+        'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr |  formatselect fontselect fontsizeselect',
+        'undo redo link unlink | forecolor backcolor | subscript superscript | newdocument charmap removeformat cleanup code'
+    ],
+    plugins: 'hr link textcolor lists',
+{/if}
+{if \$resizing}
+    statusbar: true,
+    resize: true
+{else}
+    statusbar: false,
+    resize: false
+{/if}
+{literal}}{/literal}
+</script>
+{if \$comments}
+    <div class="cf_field_comments">{\$comments}</div>
+{/if}
+END;
+
+    private static $resourceCss =<<< END
+body .mce-ico {
+    font-size: 13px;
+}
+body .mce-btn button {
+    padding: 3px 5px 3px 7px;
+}
+END;
+
+    private static $resourceJs =<<< END
+// this is populated by each tinyMCE WYWISYG with their settings on page load
+var cf_tinymce_settings = {};
+
+$(function() {
+    $('textarea.cf_tinymce').each(function() {
+        var field_name = $(this).attr("name");
+        var settings   = cf_tinymce_settings[field_name];
+        settings.selector = "#" + $(this).attr("id");
+        tinymce.init(settings);
+    });
+});
+
+cf_tinymce_settings.check_required = function() {
+    var errors = [];
+    for (var i=0; i<rsv_custom_func_errors.length; i++) {
+        if (rsv_custom_func_errors[i].func != "cf_tinymce_settings.check_required") {
+            continue;
+        }
+        var field_name = rsv_custom_func_errors[i].field;
+        var val = $.trim(tinyMCE.get("cf_" + field_name + "_id").getContent());
+        if (!val) {
+            var el = document.edit_submission_form[field_name];
+            errors.push([el, rsv_custom_func_errors[i].err]);
+        }
+    }
+    if (errors.length) {
+        return errors;
+    }
+    return true;
+}
+END;
+
+    private static $fieldTypeRecordMap = array(
+        "is_editable" => "no",
+        "non_editable_info" => "This module can only be edited via the tinyMCE module.",
+        "field_type_name" => "{\$LANG.word_wysiwyg}",
+        "field_type_identifier" => "tinymce",
+        "is_file_field" => "no",
+        "is_date_field" => "no",
+        "raw_field_type_map" => "textarea",
+        "raw_field_type_map_multi_select_id" => null,
+        "compatible_field_sizes" => "large,very_large",
+        "view_field_rendering_type" => "smarty",
+        "view_field_php_function_source" => "core",
+        "view_field_php_function" => "",
+        "php_processing" => ""
+    );
+
+    private static $validationRecordMap = array(
+        "rsv_rule" => "function",
+        "rule_label" => "{\$LANG.word_required}",
+        "rsv_field_name" => "",
+        "custom_function" => "cf_tinymce_settings.check_required",
+        "custom_function_required" => "yes",
+        "default_error_message" => "{\$LANG.validation_default_rule_required}",
+        "list_order" => 1
+    );
+
+
+    // orders get applied by the order they appear in this data structure
+    private static $fieldTypeSettings = array(
+        array(
+            "field_label" => "Toolbar",
+            "field_setting_identifier" => "toolbar",
+            "field_type" => "select",
+            "field_orientation" => "na",
+            "default_value" => "simple",
+            "options" => array(
+                array(
+                    "option_text" => "Basic",
+                    "option_value" => "basic",
+                    "is_new_sort_group" => "yes"
+                ),
+                array(
+                    "option_text" => "Simple",
+                    "option_value" => "simple",
+                    "is_new_sort_group" => "yes"
+                ),
+                array(
+                    "option_text" => "Advanced",
+                    "option_value" => "advanced",
+                    "is_new_sort_group" => "yes"
+                ),
+                array(
+                    "option_text" => "Expert",
+                    "option_value" => "expert",
+                    "is_new_sort_group" => "yes"
+                )
+            )
+        ),
+
+        array(
+            "field_label" => "Allow Toolbar Resizing",
+            "field_setting_identifier" => "resizing",
+            "field_type" => "radios",
+            "field_orientation" => "horizontal",
+            "default_value" => "true",
+            "options" => array(
+                array(
+                    "option_text" => "Yes",
+                    "option_value" => "true",
+                    "is_new_sort_group" => "yes"
+                ),
+                array(
+                    "option_text" => "No",
+                    "option_value" => "false",
+                    "is_new_sort_group" => "no"
+                )
+            )
+        ),
+
+        array(
+            "field_label" => "Field Comments",
+            "field_setting_identifier" => "comments",
+            "field_type" => "textarea",
+            "field_orientation" => "na",
+            "default_value" => ""
+        )
     );
 
 
@@ -65,32 +251,20 @@ class Module extends FormToolsModule
         $group_id = $db->fetch(PDO::FETCH_COLUMN);
 
         try {
-            $db->beginTransaction();
-
             // now find out how many field types there are in the group so we can add the row with the correct list order
-            $db->query("SELECT count(*) as c FROM {PREFIX}field_types WHERE group_id = :group_id");
+            $db->query("SELECT count(*) FROM {PREFIX}field_types WHERE group_id = :group_id");
             $db->bind("group_id", $group_id);
             $db->execute();
 
             $next_list_order = $db->fetch(PDO::FETCH_COLUMN) + 1;
 
             $field_type_id = self::addFieldType($module_id, $group_id, $next_list_order);
-
-            // the validation rule
             self::addValidation($field_type_id);
+            self::addFieldTypeSettings($field_type_id);
 
-            // now insert the settings and their options
-            self::addToolbarTypeSetting($field_type_id);
-            self::addToolbarResizingSetting($field_type_id);
-            self::addFieldCommentsSetting($field_type_id);
-
-            self::resetHooks();
-
-            $db->processTransaction();
+            $this->resetHooks();
             return array(true, "");
-        } catch (PDOException $e) {
-            $db->rollbackTransaction();
-            print_r($e);
+        } catch (Exception $e) {
             return array(false, $L["notify_error_installing"] . $e->getMessage());
         }
     }
@@ -109,13 +283,16 @@ class Module extends FormToolsModule
     }
 
 
-//    public function upgrade () {
-//        // TODO: the field type settings changed with this upgrade, but we can keep the mapping
-//    }
-
-    public static function resetHooks ()
+    public function upgrade ($module_id, $old_module_version)
     {
-        Hooks::unregisterModuleHooks("field_type_tinymce");
+        $this->resetHooks();
+        $this->resetFieldType($module_id);
+    }
+
+
+    public function resetHooks ()
+    {
+        $this->clearHooks();
         Hooks::registerHook("template", "field_type_tinymce", "head_bottom", "", "includeFiles");
         Hooks::registerHook("template", "field_type_tinymce", "standalone_form_fields_head_bottom", "", "includeStandaloneFiles");
     }
@@ -204,109 +381,100 @@ class Module extends FormToolsModule
         return array(true, $L["notify_default_settings_updated"]);
     }
 
+    /**
+     * Called on upgrading to 2.0.4, and via the UI. This resets the module to its factory defaults retaining the original
+     * database integrity, i.e. the field type, field type settings, validation and options are all *updated* in place,
+     * rather than wiping them out and reinserting.
+     *
+     * It's kind of a kludge, quite honestly. Ideally it would just wipe out the old data, insert the new and update
+     * any references. It's the latter that's fiddly. So for now we're going to go with this.
+     */
+    public static function resetFieldType($module_id)
+    {
+        $db = Core::$db;
+
+        $original_field_type = FieldTypes::getFieldTypeByIdentifier("tinymce");
+        if (empty($original_field_type)) {
+            return array(false, "TODO");
+        }
+
+        $field_type_id = $original_field_type["field_type_id"];
+
+        // update the main field types record
+        $db->query("
+            UPDATE {PREFIX}field_types
+            SET    is_editable = :is_editable,
+                   non_editable_info = :non_editable_info, 
+                   managed_by_module_id = :managed_by_module_id,
+                   field_type_name = :field_type_name,
+                   field_type_identifier = :field_type_identifier,
+                   group_id = :group_id,
+                   is_file_field = :is_file_field,
+                   is_date_field = :is_date_field,
+                   raw_field_type_map = :raw_field_type_map, 
+                   raw_field_type_map_multi_select_id = :raw_field_type_map_multi_select_id,
+                   list_order = :list_order,
+                   compatible_field_sizes = :compatible_field_sizes,
+                   view_field_rendering_type = :view_field_rendering_type,
+                   view_field_php_function_source = :view_field_php_function_source,
+                   view_field_php_function = :view_field_php_function,
+                   view_field_smarty_markup = :view_field_smarty_markup,
+                   edit_field_smarty_markup = :edit_field_smarty_markup,
+                   php_processing = :php_processing,
+                   resources_css = :resources_css,
+                   resources_js = resources_js
+            WHERE field_type_id = :field_type_id
+        ");
+        $db->bindAll(array(
+            "is_editable" => self::$fieldTypeRecordMap["is_editable"],
+            "non_editable_info" => self::$fieldTypeRecordMap["non_editable_info"],
+            "managed_by_module_id" => $module_id,
+            "field_type_name" => self::$fieldTypeRecordMap["field_type_name"],
+            "field_type_identifier" => self::$fieldTypeRecordMap["field_type_identifier"],
+            "group_id" => $original_field_type["group_id"],
+            "is_file_field" => self::$fieldTypeRecordMap["is_file_field"],
+            "is_date_field" => self::$fieldTypeRecordMap["is_date_field"],
+            "raw_field_type_map" => self::$fieldTypeRecordMap["raw_field_type_map"],
+            "raw_field_type_map_multi_select_id" => self::$fieldTypeRecordMap["raw_field_type_map_multi_select_id"],
+            "list_order" => $original_field_type["list_order"],
+            "compatible_field_sizes" => self::$fieldTypeRecordMap["compatible_field_sizes"],
+            "view_field_rendering_type" => self::$fieldTypeRecordMap["view_field_rendering_type"],
+            "view_field_php_function_source" => self::$fieldTypeRecordMap["view_field_php_function_source"],
+            "view_field_php_function" => self::$fieldTypeRecordMap["view_field_php_function"],
+            "view_field_smarty_markup" => self::$viewFieldSmartyMarkup,
+            "edit_field_smarty_markup" => self::$editFieldSmartyMarkup,
+            "php_processing" => self::$fieldTypeRecordMap["php_processing"],
+            "resources_css" => self::$resourceCss,
+            "resources_js" => self::$resourceJs,
+            "field_type_id" => $field_type_id
+        ));
+        $db->execute();
+
+        // 2. Validation. We know there's only a single rule so we don't worry about order & just update the single record
+        $validation_rules = FieldTypes::getFieldTypeValidationRules($field_type_id);
+        $rule = $validation_rules[0];
+
+        $db->query("
+            UPDATE {PREFIX}field_type_validation_rules
+            SET    rsv_rule = :rsv_rule,
+                   rule_label = :rule_label,
+                   rsv_field_name = :rsv_field_name,
+                   custom_function = :custom_function,
+                   custom_function_required = :custom_function_required,
+                   default_error_message = :default_error_message,
+            WHERE field_type_id = :field_type_id
+        ");
+        $db->bindAll(self::$validationRecordMap);
+        $db->bind("rule_id", $rule["rule_id"]);
+        $db->execute();
+    }
+
 
     // helpers
 
     private static function addFieldType ($module_id, $group_id, $list_order)
     {
         $db = Core::$db;
-
-        $view_field_smarty_markup =<<< END
-    {if \$CONTEXTPAGE == "edit_submission"}
-        {\$VALUE}
-    {elseif \$CONTEXTPAGE == "submission_listing"}
-        {\$VALUE|strip_tags}
-    {else}
-        {\$VALUE|nl2br}
-    {/if}
-END;
-
-        $edit_field_smarty_markup =<<< END
-    <textarea name="{\$NAME}" id="cf_{\$NAME}_id" class="cf_tinymce">{\$VALUE}</textarea>
-    <script>
-    cf_tinymce_settings["{\$NAME}"] = {literal}{{/literal}
-        skin: "lightgray",
-        branding: false,
-        menubar: false,
-        elementpath: false,
-    {if \$toolbar == "basic"}
-        toolbar: [
-            'bold italic underline strikethrough | bullist numlist'
-        ],
-    {elseif \$toolbar == "simple"}
-        toolbar: [
-            'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | link unlink forecolor backcolor'
-        ],
-        plugins: 'hr link textcolor lists',
-    {elseif \$toolbar == "advanced"}
-        toolbar: [
-            'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | undo redo link unlink | fontselect fontsizeselect',
-            'forecolor backcolor | subscript superscript code'
-        ],
-        plugins: 'hr link textcolor lists',
-    {elseif \$toolbar == "expert"}
-        toolbar: [
-            'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr |  formatselect fontselect fontsizeselect',
-            'undo redo link unlink | forecolor backcolor | subscript superscript | newdocument charmap removeformat cleanup code'
-        ],
-        plugins: 'hr link textcolor lists',
-    {/if}
-    {if \$resizing}
-        statusbar: true,
-        resize: true
-    {else}
-        statusbar: false,
-        resize: false
-    {/if}
-    {literal}}{/literal}
-    </script>
-    {if \$comments}
-        <div class="cf_field_comments">{\$comments}</div>
-    {/if}
-END;
-
-
-        $resource_css =<<< END
-body .mce-ico {
-    font-size: 13px;
-}
-body .mce-btn button {
-    padding: 3px 5px 3px 7px;
-}
-END;
-
-        $resources_js =<<< END
-    // this is populated by each tinyMCE WYWISYG with their settings on page load
-    var cf_tinymce_settings = {};
-    
-    $(function() {
-        $('textarea.cf_tinymce').each(function() {
-            var field_name = $(this).attr("name");
-            var settings   = cf_tinymce_settings[field_name];
-            settings.selector = "#" + $(this).attr("id");
-            tinymce.init(settings);
-        });
-    });
-
-    cf_tinymce_settings.check_required = function() {
-        var errors = [];
-        for (var i=0; i<rsv_custom_func_errors.length; i++) {
-            if (rsv_custom_func_errors[i].func != "cf_tinymce_settings.check_required") {
-                continue;
-            }
-            var field_name = rsv_custom_func_errors[i].field;
-            var val = $.trim(tinyMCE.get("cf_" + field_name + "_id").getContent());
-            if (!val) {
-                var el = document.edit_submission_form[field_name];
-                errors.push([el, rsv_custom_func_errors[i].err]);
-            }
-        }
-        if (errors.length) {
-            return errors;
-        }
-        return true;
-    }
-END;
 
         $db->query("
             INSERT INTO {PREFIX}field_types (is_editable, non_editable_info, managed_by_module_id, field_type_name,
@@ -319,32 +487,21 @@ END;
                 :compatible_field_sizes, :view_field_rendering_type, :view_field_php_function_source, :view_field_php_function,
                 :view_field_smarty_markup, :edit_field_smarty_markup, :php_processing, :resources_css, :resources_js)
         ");
+        $db->bindAll(self::$fieldTypeRecordMap);
         $db->bindAll(array(
-            "is_editable" => "no",
-            "non_editable_info" => "This module may only be edited via the tinyMCE module.",
             "module_id" => $module_id,
-            "field_type_name" => "{\$LANG.word_wysiwyg}",
-            "field_type_identifier" => "tinymce",
             "group_id" => $group_id,
-            "is_file_field" => "no",
-            "is_date_field" => "no",
-            "raw_field_type_map" => "textarea",
-            "raw_field_type_map_multi_select_id" => null,
             "list_order" => $list_order,
-            "compatible_field_sizes" => "large,very_large",
-            "view_field_rendering_type" => "smarty",
-            "view_field_php_function_source" => "core",
-            "view_field_php_function" => "",
-            "view_field_smarty_markup" => $view_field_smarty_markup,
-            "edit_field_smarty_markup" => $edit_field_smarty_markup,
-            "php_processing" => "",
-            "resources_css" => $resource_css,
-            "resources_js" => $resources_js
+            "view_field_smarty_markup" => self::$viewFieldSmartyMarkup,
+            "edit_field_smarty_markup" => self::$editFieldSmartyMarkup,
+            "resources_css" => self::$resourceCss,
+            "resources_js" => self::$resourceJs
         ));
         $db->execute();
 
         return $db->getInsertId();
     }
+
 
     private static function addValidation ($field_type_id)
     {
@@ -356,84 +513,58 @@ END;
             VALUES (:field_type_id, :rsv_rule, :rule_label, :rsv_field_name, :custom_function, :custom_function_required,
               :default_error_message, :list_order)
         ");
-        $db->bindAll(array(
-            "field_type_id" => $field_type_id,
-            "rsv_rule" => "function",
-            "rule_label" => "{\$LANG.word_required}",
-            "rsv_field_name" => "",
-            "custom_function" => "cf_tinymce_settings.check_required",
-            "custom_function_required" => "yes",
-            "default_error_message" => "{\$LANG.validation_default_rule_required}",
-            "list_order" => 1
-        ));
-        $db->execute();
-    }
-
-    private static function addToolbarTypeSetting ($field_type_id)
-    {
-        $db = Core::$db;
-
-        $db->query("
-            INSERT INTO {PREFIX}field_type_settings (field_type_id, field_label, field_setting_identifier, field_type,
-              field_orientation, default_value, list_order)
-            VALUES (:field_type_id, 'Toolbar', 'toolbar', 'select', 'na', 'simple', 1)
-        ");
-        $db->bind("field_type_id", $field_type_id);
-        $db->execute();
-
-        $setting_id = $db->getInsertId();
-
-        $db->query("
-            INSERT INTO {PREFIX}field_type_setting_options (setting_id, option_text, option_value, option_order, is_new_sort_group)
-            VALUES
-                (:setting_id1, 'Basic', 'basic', 1, 'yes'),
-                (:setting_id2, 'Simple', 'simple', 2, 'yes'),
-                (:setting_id3, 'Advanced', 'advanced', 3, 'yes'),
-                (:setting_id4, 'Expert', 'expert', 4, 'yes')
-        ");
-        $db->bindAll(array(
-            "setting_id1" => $setting_id,
-            "setting_id2" => $setting_id,
-            "setting_id3" => $setting_id,
-            "setting_id4" => $setting_id
-        ));
-        $db->execute();
-    }
-
-    private static function addToolbarResizingSetting ($field_type_id)
-    {
-        $db = Core::$db;
-
-        $db->query("
-            INSERT INTO {PREFIX}field_type_settings (field_type_id, field_label, field_setting_identifier, field_type,
-              field_orientation, default_value, list_order)
-            VALUES (:field_type_id, 'Allow Toolbar Resizing', 'resizing', 'radios', 'horizontal', 'true', 6)
-        ");
-        $db->bind("field_type_id", $field_type_id);
-        $db->execute();
-
-        $setting_id = $db->getInsertId();
-
-        $db->query("
-            INSERT INTO {PREFIX}field_type_setting_options (setting_id, option_text, option_value, option_order, is_new_sort_group)
-            VALUES (:setting_id1, 'Yes', 'true', 1, 'yes'),
-                   (:setting_id2, 'No', 'false', 2, 'no')
-        ");
-        $db->bind("setting_id1", $setting_id);
-        $db->bind("setting_id2", $setting_id);
-        $db->execute();
-    }
-
-    private static function addFieldCommentsSetting ($field_type_id)
-    {
-        $db = Core::$db;
-
-        $db->query("
-            INSERT INTO {PREFIX}field_type_settings (field_type_id, field_label, field_setting_identifier, field_type,
-              field_orientation, default_value, list_order)
-            VALUES (:field_type_id, 'Field Comments', 'comments', 'textarea', 'na', '', 7)
-        ");
+        $db->bindAll(self::$validationRecordMap);
         $db->bind("field_type_id", $field_type_id);
         $db->execute();
     }
+
+
+    private static function addFieldTypeSettings ($field_type_id)
+    {
+        $db = Core::$db;
+
+        $setting_list_order = 1;
+        foreach (self::$fieldTypeSettings as $setting) {
+
+            $db->query("
+                INSERT INTO {PREFIX}field_type_settings (field_type_id, field_label, field_setting_identifier, field_type,
+                    field_orientation, default_value, list_order)
+                VALUES (:field_type_id, :field_label, :field_setting_identifier, :field_type, :field_orientation, 
+                    :default_value, :list_order)
+            ");
+            $db->bindAll(array(
+                "field_type_id" => $field_type_id,
+                "field_label" => $setting["field_label"],
+                "field_setting_identifier" => $setting["field_setting_identifier"],
+                "field_type" => $setting["field_type"],
+                "field_orientation" => $setting["field_orientation"],
+                "default_value" => $setting["default_value"],
+                "list_order" => $setting_list_order
+            ));
+            $db->execute();
+            $setting_id = $db->getInsertId();
+
+            if (isset($setting["options"])) {
+                self::addFieldSettingOptions($setting_id, $setting["options"]);
+            }
+
+            $setting_list_order++;
+        }
+    }
+
+
+    private static function addFieldSettingOptions($setting_id, $options)
+    {
+        $db = Core::$db;
+
+        $cols = array("setting_id", "option_text", "option_value", "option_order", "is_new_sort_group");
+
+        $data = array();
+        foreach ($options as $row) {
+            $row["setting_id"] = $setting_id;
+            $data[] = $row;
+        }
+        $db->insertQueryMultiple("field_type_setting_options", $cols, $data);
+    }
+
 }

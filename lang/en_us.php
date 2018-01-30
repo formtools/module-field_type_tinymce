@@ -8,6 +8,7 @@ $L["word_help"] = "Help";
 $L["text_help"] = "For more information on this module, please see the <a href=\"https://docs.formtools.org/modules/field_type_tinymce/\" target=\"_blank\">help documentation</a> on the Form Tools site.";
 
 $L["phrase_show_status_bar"] = "Show Status Bar";
+$L["phrase_reset_field_settings"] = "Reset Field Settings";
 
 $L["text_example_wysiwyg"] = "This page controls how your rich text fields will look, based on the settings defined above. You can assign any form field to show these editors on the Edit Form -> Fields page/tab.";
 
