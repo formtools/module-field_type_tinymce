@@ -2,6 +2,7 @@
 
 require_once("../../global/library.php");
 
+use FormTools\Core;
 use FormTools\FieldTypes;
 use FormTools\Modules;
 
@@ -22,6 +23,8 @@ foreach ($tinymce_field_type["settings"] as $setting_info) {
 }
 
 $page_vars = array();
+$page_vars["g_success"] = $success;
+$page_vars["g_message"] = $message;
 $page_vars["module_settings"] = $settings;
 $page_vars["head_css"] =<<< END
 body .mce-ico {

@@ -17,8 +17,8 @@ class Module extends FormToolsModule
     protected $author = "Ben Keen";
     protected $authorEmail = "ben.keen@gmail.com";
     protected $authorLink = "https://formtools.org";
-    protected $version = "2.0.3";
-    protected $date = "2018-01-28";
+    protected $version = "2.0.4";
+    protected $date = "2018-01-30";
     protected $originLanguage = "en_us";
 
     protected $jsFiles = array(
@@ -28,7 +28,6 @@ class Module extends FormToolsModule
 
     protected $nav = array(
         "module_name" => array("index.php", false),
-        "phrase_reset_field_settings" => array("reset.php", false),
         "word_help" => array("help.php", false)
     );
 
@@ -151,12 +150,10 @@ END;
         "rsv_field_name" => "",
         "custom_function" => "cf_tinymce_settings.check_required",
         "custom_function_required" => "yes",
-        "default_error_message" => "{\$LANG.validation_default_rule_required}",
-        "list_order" => 1
+        "default_error_message" => "{\$LANG.validation_default_rule_required}"
     );
 
 
-    // orders get applied by the order they appear in this data structure
     private static $fieldTypeSettings = array(
         array(
             "field_label" => "Toolbar",
@@ -232,6 +229,7 @@ END;
 
         // check it's not already installed
         $field_type_info = FieldTypes::getFieldTypeByIdentifier("tinymce");
+
         if (!empty($field_type_info)) {
             return array(false, $LANG["notify_module_already_installed"]);
         }
@@ -283,10 +281,13 @@ END;
     }
 
 
-    public function upgrade ($module_id, $old_module_version)
+    public function upgrade($module_id, $old_module_version)
     {
         $this->resetHooks();
-        $this->resetFieldType($module_id);
+
+        if ($this->getVersion() == "2.0.4") {
+            $this->resetFieldType($module_id);
+        }
     }
 
 
@@ -382,7 +383,7 @@ END;
     }
 
     /**
-     * Called on upgrading to 2.0.4, and via the UI. This resets the module to its factory defaults retaining the original
+     * Called on upgrading to 2.0.4. This resets the module to its factory defaults retaining the original
      * database integrity, i.e. the field type, field type settings, validation and options are all *updated* in place,
      * rather than wiping them out and reinserting.
      *
@@ -411,7 +412,7 @@ END;
                    group_id = :group_id,
                    is_file_field = :is_file_field,
                    is_date_field = :is_date_field,
-                   raw_field_type_map = :raw_field_type_map, 
+                   raw_field_type_map = :raw_field_type_map,
                    raw_field_type_map_multi_select_id = :raw_field_type_map_multi_select_id,
                    list_order = :list_order,
                    compatible_field_sizes = :compatible_field_sizes,
@@ -422,7 +423,7 @@ END;
                    edit_field_smarty_markup = :edit_field_smarty_markup,
                    php_processing = :php_processing,
                    resources_css = :resources_css,
-                   resources_js = resources_js
+                   resources_js = :resources_js
             WHERE field_type_id = :field_type_id
         ");
         $db->bindAll(array(
@@ -461,12 +462,16 @@ END;
                    rsv_field_name = :rsv_field_name,
                    custom_function = :custom_function,
                    custom_function_required = :custom_function_required,
-                   default_error_message = :default_error_message,
-            WHERE field_type_id = :field_type_id
+                   default_error_message = :default_error_message
+            WHERE  rule_id = :rule_id
         ");
+
         $db->bindAll(self::$validationRecordMap);
         $db->bind("rule_id", $rule["rule_id"]);
         $db->execute();
+
+        // clean up any old field type settings that are no longer applicable
+        self::removeOldFieldTypeSettings($field_type_id);
     }
 
 
@@ -515,6 +520,7 @@ END;
         ");
         $db->bindAll(self::$validationRecordMap);
         $db->bind("field_type_id", $field_type_id);
+        $db->bind("list_order", 1);
         $db->execute();
     }
 
@@ -557,14 +563,42 @@ END;
     {
         $db = Core::$db;
 
-        $cols = array("setting_id", "option_text", "option_value", "option_order", "is_new_sort_group");
-
-        $data = array();
+        $order = 1;
         foreach ($options as $row) {
-            $row["setting_id"] = $setting_id;
-            $data[] = $row;
+            $db->query("
+                INSERT INTO {PREFIX}field_type_setting_options (setting_id, option_text, option_value, option_order, is_new_sort_group)
+                VALUES (:setting_id, :option_text, :option_value, :option_order, :is_new_sort_group)
+            ");
+            $db->bindAll(array(
+                "setting_id" => $setting_id,
+                "option_text" => $row["option_text"],
+                "option_value" => $row["option_value"],
+                "option_order" => $order,
+                "is_new_sort_group" => $row["is_new_sort_group"]
+            ));
+            $db->execute();
+
+            $order++;
         }
-        $db->insertQueryMultiple("field_type_setting_options", $cols, $data);
     }
 
+
+    private static function removeOldFieldTypeSettings($field_type_id)
+    {
+        $db = Core::$db;
+        $known_field_type_setting_identifiers = array_column(self::$fieldTypeSettings, "field_setting_identifier");
+
+        $identifiers = implode("', '", $known_field_type_setting_identifiers);
+        $db->query("
+            SELECT setting_id 
+            FROM {PREFIX}field_type_settings
+            WHERE field_type_id = :field_type_id AND 
+                  field_setting_identifier NOT IN ('$identifiers')
+        ");
+        $db->bind("field_type_id", $field_type_id);
+        $db->execute();
+
+        $old_field_settings = $db->fetchAll(PDO::FETCH_COLUMN);
+        FieldTypes::deleteFieldTypeSettings($old_field_settings);
+    }
 }
