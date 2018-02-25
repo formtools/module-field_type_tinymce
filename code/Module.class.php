@@ -18,8 +18,8 @@ class Module extends FormToolsModule
     protected $author = "Ben Keen";
     protected $authorEmail = "ben.keen@gmail.com";
     protected $authorLink = "https://formtools.org";
-    protected $version = "2.0.5";
-    protected $date = "2018-02-01";
+    protected $version = "2.0.6";
+    protected $date = "2018-02-24";
     protected $originLanguage = "en_us";
 
     protected $jsFiles = array(
@@ -286,7 +286,7 @@ END;
     {
         $this->resetHooks();
 
-        if (General::isVersionEarlierThan($this->getVersion(), "2.0.5")) {
+        if (General::isVersionEarlierThan($old_module_version, "2.0.6")) {
             $this->resetFieldType($module_id);
         }
     }
