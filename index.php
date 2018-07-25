@@ -76,13 +76,13 @@ $(function() {
                 settings.toolbar = [
                     'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | undo redo link unlink | fontselect fontsizeselect | forecolor backcolor | subscript superscript code'
                 ];
-                settings.plugins = 'hr link textcolor lists';
+                settings.plugins = 'hr link textcolor lists code';
                 break;
             case "expert":
                 settings.toolbar = [
                     'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | undo redo link unlink | forecolor backcolor | formatselect fontselect fontsizeselect | subscript superscript | newdocument charmap removeformat cleanup code'
                 ];
-                settings.plugins = 'hr link textcolor lists';
+                settings.plugins = 'hr link textcolor lists code';
                 break;
         }
         

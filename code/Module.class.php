@@ -18,8 +18,8 @@ class Module extends FormToolsModule
     protected $author = "Ben Keen";
     protected $authorEmail = "ben.keen@gmail.com";
     protected $authorLink = "https://formtools.org";
-    protected $version = "2.0.6";
-    protected $date = "2018-02-24";
+    protected $version = "2.0.7";
+    protected $date = "2018-07-24";
     protected $originLanguage = "en_us";
 
     protected $jsFiles = array(
@@ -65,13 +65,13 @@ cf_tinymce_settings["{\$NAME}"] = {literal}{{/literal}
         'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr | undo redo link unlink | fontselect fontsizeselect',
         'forecolor backcolor | subscript superscript code'
     ],
-    plugins: 'hr link textcolor lists',
+    plugins: 'hr link textcolor lists code',
 {elseif \$toolbar == "expert"}
     toolbar: [
         'bold italic underline strikethrough | bullist numlist | outdent indent | blockquote hr |  formatselect fontselect fontsizeselect',
         'undo redo link unlink | forecolor backcolor | subscript superscript | newdocument charmap removeformat cleanup code'
     ],
-    plugins: 'hr link textcolor lists',
+    plugins: 'hr link textcolor lists code',
 {/if}
 {if \$resizing}
     statusbar: true,
@@ -289,6 +289,11 @@ END;
         if (General::isVersionEarlierThan($old_module_version, "2.0.6")) {
             $this->resetFieldType($module_id);
         }
+
+		if (General::isVersionEarlierThan($old_module_version, "2.0.7")) {
+			$this->updateEditFieldSmartyMarkup();
+		}
+
     }
 
 
@@ -602,4 +607,25 @@ END;
         $old_field_settings = $db->fetchAll(PDO::FETCH_COLUMN);
         FieldTypes::deleteFieldTypeSettings($old_field_settings);
     }
+
+
+    private function updateEditFieldSmartyMarkup()
+	{
+		$db = Core::$db;
+
+		$original_field_type = FieldTypes::getFieldTypeByIdentifier("tinymce");
+		$field_type_id = $original_field_type["field_type_id"];
+
+		// update the main field types record
+		$db->query("
+            UPDATE {PREFIX}field_types
+            SET    edit_field_smarty_markup = :edit_field_smarty_markup
+            WHERE  field_type_id = :field_type_id
+        ");
+		$db->bindAll(array(
+			"edit_field_smarty_markup" => self::$editFieldSmartyMarkup,
+			"field_type_id" => $field_type_id
+		));
+		$db->execute();
+	}
 }
