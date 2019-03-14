@@ -25,13 +25,13 @@
             <td>
                 <select name="toolbar" id="toolbar">
                     <option value="basic"
-                            {if $module_settings.toolbar == "basic"}selected{/if}>{$LANG.word_basic}</option>
+                            {if $module_settings.toolbar == "basic"}selected{/if}>{$L.word_basic}</option>
                     <option value="simple"
                             {if $module_settings.toolbar == "simple"}selected{/if}>{$LANG.word_simple}</option>
                     <option value="advanced"
-                            {if $module_settings.toolbar == "advanced"}selected{/if}>{$LANG.word_advanced}</option>
+                            {if $module_settings.toolbar == "advanced"}selected{/if}>{$L.word_advanced}</option>
                     <option value="expert"
-                            {if $module_settings.toolbar == "expert"}selected{/if}>{$LANG.word_expert}</option>
+                            {if $module_settings.toolbar == "expert"}selected{/if}>{$L.word_expert}</option>
                 </select>
             </td>
         </tr>
